@@ -1,0 +1,12 @@
+{
+  "className": "ApplicationXpra",
+  "name": "Xpra Client",
+  "mime": null,
+  "icon": "./icon.png",
+  "category": "network",
+  "main": {
+    "node": "server/main.js",
+    "php": "server/main.php"
+  },
+  "preload": ["main.js", "main.css"]
+}

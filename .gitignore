@@ -1,0 +1,13 @@
+node_modules
+*.swp
+*.swo
+.DS_Store
+.git-old
+*-tmp.*
+twistd.*
+.vagrant/*
+*.pyc
+*.bak
+*.o
+.tern-project
+sources
