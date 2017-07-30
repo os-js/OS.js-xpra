@@ -6,6 +6,11 @@ const Window = OSjs.require('core/window');
 // WINDOW
 ///////////////////////////////////////////////////////////////////////////////
 
+/**
+ * A Xpra Window
+ *
+ * A normal OS.js window that is hooked with _on()
+ */
 export default class ApplicationXpraWindow extends Window {
 
   constructor(win, app, metadata) {
@@ -33,11 +38,17 @@ export default class ApplicationXpraWindow extends Window {
     return super.destroy(...arguments);
   }
 
+  /*
+   * Handle movement packet
+   */
   move(x, y) {
     this.x = x;
     this.y = y;
   }
 
+  /*
+   * Initializes Window
+   */
   init(wmRef, app) {
     const root = super.init(...arguments);
 
@@ -50,12 +61,18 @@ export default class ApplicationXpraWindow extends Window {
     return root;
   }
 
+  /*
+   * Removes an overlay
+   */
   removeOverlay(wid) {
     if ( this.overlays[wid] ) {
       delete this.overlays[wid];
     }
   }
 
+  /*
+   * Sets up events
+   */
   addEvents(wid, canvas) {
     const topMargin = this._$top.offsetHeight;
 
@@ -79,6 +96,9 @@ export default class ApplicationXpraWindow extends Window {
     });
   }
 
+  /*
+   * Sets up an overlay
+   */
   addOverlay(wid, layer, x, y, w, h) {
     if ( !this.canvas ) {
       console.warn('No canvas for', layer);
@@ -102,10 +122,16 @@ export default class ApplicationXpraWindow extends Window {
     this.overlays[wid] = layer;
   }
 
+  /*
+   * Get client properties
+   */
   getClientProperties() {
     return this.layer.getClientProperties();
   }
 
+  /*
+   * Get geometry
+   */
   getGeometry() {
     const {w, h} = this._dimension;
     const {x, y} = this._position;

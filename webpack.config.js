@@ -11,6 +11,8 @@ module.exports = new Promise((resolve, reject) => {
   osjs.webpack.createPackageConfiguration(metadataFile, options).then((result) => {
     const copy = [{
       from: 'icon.png'
+    }, {
+      from: 'icon_color.png'
     }];
 
     result.config.plugins.push(new CopyWebpackPlugin(copy, {

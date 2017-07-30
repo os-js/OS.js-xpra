@@ -4,6 +4,10 @@ import Layer from './layer.js';
 
 const Application = OSjs.require('core/application');
 const Window = OSjs.require('core/window');
+const WindowManager = OSjs.require('core/windowmanager');
+const Dialog = OSjs.require('core/dialog');
+const GUI = OSjs.require('utils/gui');
+const Locales = OSjs.require('core/locales');
 
 ///////////////////////////////////////////////////////////////////////////////
 // APPLICATION
@@ -12,8 +16,11 @@ const Window = OSjs.require('core/window');
 export default class ApplicationXpra extends Application {
 
   constructor(args, metadata) {
-    super('ApplicationXpra', args, metadata);
+    super('ApplicationXpra', args, metadata, {}, {
+      closeWithMain: false
+    });
 
+    this.quitting = false;
     this.client = null;
     this.map = {};
   }
@@ -23,11 +30,103 @@ export default class ApplicationXpra extends Application {
       this.client = this.client.destroy();
     }
 
+    WindowManager.instance.removeNotificationIcon('Xpra');
+
     return super.destroy(...arguments);
   }
 
+  /*
+   * Quit the application
+   */
+  quit() {
+    this.quitting = true;
+    this.destroy();
+  }
+
+  /*
+   * Initialize Application
+   */
   init(settings, metadata) {
     super.init(...arguments);
+
+    // Initialize client
+    this.createClient();
+    this.createConnection();
+
+    // Hook into WindowManager
+    const setDesktopSize = () => {
+      const geom = WindowManager.instance.getWindowSpace();
+      this.client.setDesktopSize(geom);
+    };
+
+    setDesktopSize();
+
+    WindowManager.instance._on('resize', setDesktopSize);
+
+    // Make a notification icon
+    const createMenu = (ev) => {
+      GUI.createMenu([{
+        title: this._getArgument('uri'),
+        disabled: true
+      }, {
+        title: Locales._('LBL_EXIT'),
+        onClick: () => this.quit()
+      }, {
+        title: Locales._('LBL_WINDOWS'),
+        menu: this._getWindows().map((win) => {
+          return {
+            title: win._getTitle(),
+            onClick: () => win._focus()
+          };
+        })
+      }], ev);
+    };
+
+    WindowManager.instance.createNotificationIcon('Xpra', {
+      icon: this._getResource('icon_color.png'),
+      onClick: createMenu,
+      onContextMenu: createMenu
+    });
+  }
+
+  /*
+   * Creates a new connection
+   */
+  createConnection() {
+    if ( !this.client ) {
+      return;
+    }
+
+    const connect = (uri) => {
+      this.client.connect(uri);
+      this._setArgument('uri', uri);
+    };
+
+    let uri = this._getArgument('uri');
+    if ( uri ) {
+      connect(uri);
+    } else {
+      Dialog.create('Input', {
+        title: 'Xpra Connection Dialog',
+        message: 'Enter the server address to connect to',
+        value: 'ws://localhost:10000'
+      }, (ev, btn, value) => {
+        if ( btn === 'ok' && value ) {
+          connect(value);
+        } else {
+          this.destroy();
+        }
+      });
+    }
+  }
+
+  /*
+   * Creates a new Xpra client
+   */
+  createClient() {
+    if ( this.client ) {
+      return;
+    }
 
     const findOverlay = (wid) => this.map[wid];
 
@@ -41,7 +140,7 @@ export default class ApplicationXpra extends Application {
         y: y,
         props: props,
         meta: meta
-      }, this, metadata);
+      }, this, this.__metadata);
 
       win._on('inited', () => {
         const geom = win.getGeometry();
@@ -76,7 +175,9 @@ export default class ApplicationXpra extends Application {
       });
 
       win._on('destroy', () => {
-        this.client.send(['close-window', wid]);
+        if ( !this.quitting ) {
+          this.client.send(['close-window', wid]);
+        }
       });
 
       win._on('focus', () => {
@@ -89,7 +190,20 @@ export default class ApplicationXpra extends Application {
     this.client = new XpraClient();
 
     this.client.on('disconnect', () => {
+      WindowManager.instance.notification({
+        icon: this._getResource('icon_color.png'),
+        title: 'Disconnected from Xpra',
+        message: this._getArgument('uri')
+      });
       Object.keys(this.map).forEach((w) => this.map[w].destroy());
+    });
+
+    this.client.on('connect', () => {
+      WindowManager.instance.notification({
+        icon: this._getResource('icon_color.png'),
+        title: 'Connected to Xpra',
+        message: this._getArgument('uri')
+      });
     });
 
     this.client.on('window-metadata', (wid, meta) => {
@@ -198,23 +312,6 @@ export default class ApplicationXpra extends Application {
         instance.paint(x, y, width, height, coding, data, packet_sequence, rowstride, options, cb);
       }
     });
-
-    let uri = this._getArgument('uri');
-    if ( !uri ) {
-      uri = prompt('Connection URI', 'ws://localhost:10000');
-    }
-
-    this.client.connect(uri);
-
-    this._setArgument('uri', uri);
-  }
-
-  _addWindow() {
-    const result = super._addWindow(...arguments);
-
-    this.__mainwindow = null;
-
-    return result;
   }
 }
 

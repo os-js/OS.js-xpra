@@ -1,6 +1,3 @@
-/*
- * THIS IS A MODIFIED VERSION OF THE OFFICIAL HTML CLIENT
- */
 
 import XpraProtocol from '../lib/Protocol.js';
 import Utilities from '../lib/Utilities.js';
@@ -10,7 +7,6 @@ import forge from 'node-forge';
 import lz4 from 'lz4';
 
 const EventHandler = OSjs.require('helpers/event-handler');
-const WindowManager = OSjs.require('core/windowmanager');
 
 ///////////////////////////////////////////////////////////////////////////////
 // HELPERS
@@ -166,6 +162,13 @@ const handleWheel = (() => {
 // CLIENT
 ///////////////////////////////////////////////////////////////////////////////
 
+/**
+ * XpraClient
+ *
+ * This is the Xpra OS.js Client Module.
+ *
+ * It's a modified version of the official one.
+ */
 export default class XpraClient extends EventHandler {
 
   constructor() {
@@ -182,18 +185,23 @@ export default class XpraClient extends EventHandler {
     this.num_lock_mod = false;
     this.last_mouse_x = null;
     this.last_mouse_y = null;
-
-    // FIXME: Need resize event in WM
-    this.desktop = WindowManager.instance.getWindowSpace();
+    this.desktop = {w: 800, h: 600};
   }
 
   destroy() {
     this.disconnect();
   }
 
+  /**
+   * Connect to given URI
+   * @param {String} uri Connection uri
+   */
   connect(uri) {
     const map = {
-      open: () => this.hello(),
+      open: () => {
+        this.emit('connect');
+        this.send(['hello', this.getCapabilities()]);
+      },
       draw: this.draw,
       disconnect: this.disconnect,
       cursor: this.cursor,
@@ -224,12 +232,20 @@ export default class XpraClient extends EventHandler {
     this.protocol.open(uri);
   }
 
+  /**
+   * Gets the keycode map
+   * @return {Array}
+   */
   getKeyCodes() {
     return Object.keys(CHARCODE_TO_NAME).map((c) => {
       return [parseInt(c, 10), CHARCODE_TO_NAME[c], parseInt(c, 10), 0, 0];
     });
   }
 
+  /**
+   * Gets the monitor DPI
+   * @return {Number}
+   */
   getDPI() {
     // FIXME: Check fallback via DOM element
     if ( 'deviceXDPI' in window.screen ) {
@@ -239,10 +255,18 @@ export default class XpraClient extends EventHandler {
     return 96;
   }
 
+  /**
+   * Gets the desktop size
+   * @return {Number[]}
+   */
   getDesktopSize() {
     return [this.desktop.width, this.desktop.height];
   }
 
+  /**
+   * Gets the screen size
+   * @return {Array}
+   */
   getScrenSize() {
     const dpi = this.getDPI();
     const screen_size = this.getScrenSize();
@@ -257,6 +281,10 @@ export default class XpraClient extends EventHandler {
     return [screen];
   }
 
+  /**
+   * Get the client capabilities
+   * @return {Object}
+   */
   getCapabilities() {
     const capabilities = {
       version: Utilities.VERSION,
@@ -376,10 +404,19 @@ export default class XpraClient extends EventHandler {
     return capabilities;
   }
 
-  hello() {
-    this.send(['hello', this.getCapabilities()]);
-  }
-
+  /**
+   * Process the draw queue
+   * @param {Number} wid Window ID
+   * @param {Number} x X position
+   * @param {Number} y Y position
+   * @param {Number} width Width
+   * @param {Number} height Height
+   * @param {String} coding Encoding
+   * @param {Buffer} data Data
+   * @param {Number} packet_sequence Packet Sequence
+   * @param {Boolean} rowstride Rowstride
+   * @param {Object} options Options
+   */
   processDrawQueue(wid, x, y, width, height, coding, data, packet_sequence, rowstride, options) {
     options = options || {};
 
@@ -411,6 +448,14 @@ export default class XpraClient extends EventHandler {
     }
   }
 
+  /**
+   * Process a key
+   * @param {Number} wid Window ID
+   * @param {Boolean} pressed Key was pressed
+   * @param {Event} ev Browser event
+   * @param {Number} keycode Keycode
+   * @return {Boolean}
+   */
   processKey(wid, pressed, ev, keycode) {
     const result = getKeyPress(pressed, ev, keycode, this.caps_lock, this.num_lock, this.swap_keys);
     if ( result ) {
@@ -425,6 +470,12 @@ export default class XpraClient extends EventHandler {
     return false;
   }
 
+  /**
+   * Process a key modifier
+   * @param {Number} wid Window ID
+   * @param {Event} ev Browser event
+   * @param {Number} code Keycode
+   */
   processKeyEvent(wid, ev, code) {
     /* PITA: this only works for keypress event... */
     const modifiers = getKeyModifiers(ev, this.caps_lock, this.num_lock, this.num_lock_mod, this.swap_keys);
@@ -438,6 +489,14 @@ export default class XpraClient extends EventHandler {
     }
   }
 
+  /**
+   * Process mouse
+   * @param {Number} wid Window ID
+   * @param {Event} ev Browser event
+   * @param {Boolean} pressed Button was pressed
+   * @param {Boolean} wheel Wheel was used
+   * @param {Number} topMargin The window offset
+   */
   processMouse(wid, ev, pressed, wheel, topMargin) {
     const modifiers = [];
     const buttons = [];
@@ -483,6 +542,18 @@ export default class XpraClient extends EventHandler {
     this.send(['button-action', wid, button, pressed, [x, y], modifiers, buttons]);
   }
 
+  /**
+   * Handles mouse cursor
+   * @param {String} encoding Encoding
+   * @param {Number} x X position
+   * @param {Number} y Y position
+   * @param {Number} w Width
+   * @param {Number} h Height
+   * @param {Number} xhot X
+   * @param {Number} yhot Y
+   * @param {*} baz Unknown
+   * @param {String} img_data Encoded image data
+   */
   cursor(encoding, x, y, w, h, xhot, yhot, baz, img_data) {
     if ( arguments.length > 7  ) {
       if ( encoding !== 'png' ) {
@@ -496,6 +567,9 @@ export default class XpraClient extends EventHandler {
     }
   }
 
+  /**
+   * Do the drawing
+   */
   draw() {
     if ( this.queue_draw_packets ) {
       if ( this.dQ_interval_id === null ) {
@@ -511,6 +585,10 @@ export default class XpraClient extends EventHandler {
     }
   }
 
+  /**
+   * Send a packet
+   * @param {Array} packet The Packet
+   */
   send(packet) {
     if ( ['ping_echo', 'button-action', 'key-action', 'damage-sequence', 'pointer-position'].indexOf(packet[0]) === -1 ) {
       console.info('SEND', packet);
@@ -521,11 +599,22 @@ export default class XpraClient extends EventHandler {
     }
   }
 
+  /**
+   * Disconnects client
+   */
   disconnect() {
     if ( this.protocol ) {
       this.protocol = this.protocol.close();
+      this.emit('disconnect');
     }
-    this.emit('disconnect');
+  }
+
+  /**
+   * Set the desktop size
+   * @param {Object} geom Geometry
+   */
+  setDesktopSize(geom) {
+    this.desktop = geom;
   }
 
 }
