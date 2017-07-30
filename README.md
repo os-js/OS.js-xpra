@@ -25,12 +25,13 @@ xpra --no-daemon --bind-tcp=127.0.0.1:10000 --start=firefox  --html=on start :2
 
 * Window creation and events
 * Overlays (like menus, tooltips and general popupus)
-* Cursors
+* Cursors and Icons
 * Mouse input
 * Keyboard input
 
 ## TODO
 
+* Audio streaming
 * Overlay keyboard events
 * Launcher via Service
 * Clipboard
