@@ -6,6 +6,8 @@ This is a modified version of the Xpra HTML5 client that lets you run your Linux
 
 **THIS IS A VERY EARLY EXPERIMENT. MANY THINGS WILL CHANGE**
 
+[![YouTube Video](https://img.youtube.com/vi/c0safRR0ldM/0.jpg)](https://www.youtube.com/watch?v=c0safRR0ldM)
+
 ## Usage
 
 You'll need:
