@@ -8,5 +8,8 @@
     "node": "server/main.js",
     "php": "server/main.php"
   },
-  "preload": ["main.js", "main.css"]
+  "preload": ["main.js", "main.css"],
+  "build": {
+    "copy": ["icon.png", "icon_color.png"]
+  }
 }

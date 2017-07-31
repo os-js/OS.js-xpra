@@ -6,7 +6,7 @@ const Application = OSjs.require('core/application');
 const Window = OSjs.require('core/window');
 const WindowManager = OSjs.require('core/windowmanager');
 const Dialog = OSjs.require('core/dialog');
-const GUI = OSjs.require('utils/gui');
+const Menu = OSjs.require('gui/menu');
 const Locales = OSjs.require('core/locales');
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -65,7 +65,7 @@ export default class ApplicationXpra extends Application {
 
     // Make a notification icon
     const createMenu = (ev) => {
-      GUI.createMenu([{
+      Menu.create([{
         title: this._getArgument('uri'),
         disabled: true
       }, {
