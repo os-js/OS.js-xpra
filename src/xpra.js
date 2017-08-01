@@ -193,7 +193,7 @@ export default class XpraClient extends EventHandler {
     // Video decoder
 
     // Audio decoder
-    this.audio = new AudioDecoder();
+    this.audio = new AudioDecoder(this.uuid);
     this.audio.on('ready', (codec) => {
       console.info('SENDING AUDIO START');
       this.send(['sound-control', 'start', codec]);

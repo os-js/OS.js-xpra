@@ -13,10 +13,11 @@ let MAX_BUFFERS = 250;
 
 export default class AudioDecoder extends EventHandler {
 
-  constructor() {
+  constructor(uuid) {
     super();
 
     this.uri = '';
+    this.uuid = uuid;
     this.enabled = true;
     this.server_codecs = {};
     this.available_codecs = {};
@@ -154,7 +155,7 @@ export default class AudioDecoder extends EventHandler {
       }
     }
 
-    console.info('Codecs', this.available_codecs);
+    console.info('Codecs', this.available_codecs, 'from', this.codecs);
     console.info('Using audio framework', this.framework, this.codec);
 
     console.groupEnd();
@@ -258,6 +259,7 @@ export default class AudioDecoder extends EventHandler {
   }
 
   play() {
+    console.info('GOT SIGNAL TO START PLAYING');
     if ( this.framework === 'mediasource' ) {
       this.$audio.play();
     } else {

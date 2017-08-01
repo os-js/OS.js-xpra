@@ -20,8 +20,8 @@ export default class ApplicationXpraWindow extends Window {
       minimized: win.meta.minimized === 1,
       maximized: win.meta.maximized === 1,
       fullscreen: win.meta.fullscreen === 1,
-      w: win.w,
-      h: win.h
+      width: win.w,
+      height: win.h
     }, app);
 
     this.x = win.x;
