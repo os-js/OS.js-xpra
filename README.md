@@ -12,12 +12,15 @@ You'll need:
 
 * Xpra installed
 * Websockify (**with the python module**)
+* python-dbus, python-gobject
 
-At the moment you'll have to manually start a process:
+At the moment you'll have to manually start a process, for example Firefox:
 
 ```
-xpra --no-daemon --bind-tcp=127.0.0.1:10000 --start=firefox  --html=on start :2
+xpra --no-daemon --bind-tcp=127.0.0.1:10000 --start=firefox --html=on start :2
 ```
+
+If you want audio, add the `--speaker=on` argument. Only standard mediasource via opus+mka has been tested, so this might not work properly. You have been warned :)
 
 ## Working
 
@@ -26,10 +29,11 @@ xpra --no-daemon --bind-tcp=127.0.0.1:10000 --start=firefox  --html=on start :2
 * Cursors and Icons
 * Mouse input
 * Keyboard input
+* Audio streaming
 
 ## TODO
 
-* Audio streaming
+* SSL
 * Overlay keyboard events
 * Launcher via Service
 * Clipboard

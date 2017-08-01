@@ -2,6 +2,7 @@
 import XpraProtocol from '../lib/Protocol.js';
 import Utilities from '../lib/Utilities.js';
 import {get_event_modifiers, NUMPAD_TO_NAME, KEY_TO_NAME, CHAR_TO_NAME, CHARCODE_TO_NAME} from '../lib/Keycodes.js';
+import AudioDecoder from './audio.js';
 
 import forge from 'node-forge';
 import lz4 from 'lz4';
@@ -174,6 +175,8 @@ export default class XpraClient extends EventHandler {
   constructor() {
     super('XpraClient');
 
+    this.uri = null;
+    this.uuid = Utilities.getHexUUID();
     this.protocol = null;
     this.queue_draw_packets = false;
     this.dQ = [];
@@ -186,6 +189,19 @@ export default class XpraClient extends EventHandler {
     this.last_mouse_x = null;
     this.last_mouse_y = null;
     this.desktop = {w: 800, h: 600};
+
+    // Video decoder
+
+    // Audio decoder
+    this.audio = new AudioDecoder();
+    this.audio.on('ready', (codec) => {
+      console.info('SENDING AUDIO START');
+      this.send(['sound-control', 'start', codec]);
+    });
+    this.audio.on('destroy', (codec) => {
+      console.info('SENDING AUDIO STOP');
+      this.send(['sound-control', 'stop']);
+    });
   }
 
   destroy() {
@@ -197,11 +213,30 @@ export default class XpraClient extends EventHandler {
    * @param {String} uri Connection uri
    */
   connect(uri) {
+    console.clear(); // FIXME
+
+    let helloTimeout;
+
     const map = {
       open: () => {
+        this.audio.init(this.uri);
+
+        helloTimeout = setTimeout(() => {
+          console.warn('NOT A Xpra SERVER ?!');
+          this.disconnect();
+        }, 2500);
+
         this.emit('connect');
-        this.send(['hello', this.getCapabilities()]);
+
+        setTimeout(() => {
+          this.send(['hello', this.getCapabilities()]);
+        }, 100);
       },
+      hello: (hello) => {
+        helloTimeout = clearTimeout(helloTimeout);
+        this.accept(hello);
+      },
+      'sound-data': this.sound,
       draw: this.draw,
       disconnect: this.disconnect,
       cursor: this.cursor,
@@ -213,13 +248,19 @@ export default class XpraClient extends EventHandler {
       }
     };
 
+    console.group('XpraClient', 'XpraClient::connect()');
+    console.log('URI', uri);
+
     this.protocol = new XpraProtocol();
     this.protocol.set_packet_handler((packet, ctx) => {
       const command = packet[0];
       const args = packet.splice(1);
 
-      if ( ['ping', 'draw', 'cursor'].indexOf(command) === -1 ) {
-        console.info('RECV', command, args);
+      if ( ['ping', 'draw', 'sound-data', 'cursor'].indexOf(command) === -1 ) {
+        console.group('XpraClient', 'Got data...');
+        console.log('Command', command);
+        console.log('Args', args);
+        console.groupEnd();
       }
 
       if ( map[command] ) {
@@ -229,7 +270,9 @@ export default class XpraClient extends EventHandler {
       }
     });
 
+    this.uri = uri;
     this.protocol.open(uri);
+    console.groupEnd();
   }
 
   /**
@@ -300,7 +343,7 @@ export default class XpraClient extends EventHandler {
       'client_type': 'HTML5',
       'encoding.generic': true,
       'username': '',
-      'uuid': Utilities.getHexUUID(),
+      'uuid': this.uuid,
       'argv': [window.location.href],
       'digest': ['hmac', 'hmac+md5', 'xor'].concat(Object.keys(forge.md.algorithms).map((k) => {
         return 'hmac' + k;
@@ -343,7 +386,6 @@ export default class XpraClient extends EventHandler {
       'encoding.csc_atoms': true,
       'encoding.scrolling': true,
       'encoding.color-gamut': Utilities.getColorGamut(),
-      //video stuff:
       'encoding.video_scaling': true,
       'encoding.full_csc_modes': {
         'h264': ['YUV420P'],
@@ -358,21 +400,19 @@ export default class XpraClient extends EventHandler {
       'encoding.h264.deblocking-filter': false,
       'encoding.h264+mp4.YUV420P.profile': 'main',
       'encoding.h264+mp4.YUV420P.level': '3.0',
-      //prefer native video in mp4/webm container to broadway plain h264:
       'encoding.h264.score-delta': -20,
       'encoding.h264+mp4.score-delta': 50,
       'encoding.mpeg4+mp4.score-delta': 50,
       'encoding.vp8+webm.score-delta': 50,
+      'encoding.rgb24zlib': true,
+      'encoding.rgb_zlib': true,
 
       'sound.receive': true,
       'sound.send': false,
-      'sound.decoders': {},
+      'sound.decoders': Object.keys(this.audio.getAvailableCodecs()),
       'sound.bundle-metadata': true,
-      // encoding stuff
-      'encoding.rgb24zlib': true,
-      'encoding.rgb_zlib': true,
+
       'windows': true,
-      //partial support:
       'keyboard': true,
       'xkbmap_layout': 'no',
       'xkbmap_keycodes': this.getKeyCodes(),
@@ -382,7 +422,7 @@ export default class XpraClient extends EventHandler {
       'desktop_mode_size': this.getDesktopSize(),
       'screen_sizes': this.getDesktopSize(),
       'dpi': this.getDPI(),
-      //not handled yet, but we will:
+
       'clipboard_enabled': false,
       'clipboard.want_targets': true,
       'clipboard.greedy': true,
@@ -391,9 +431,7 @@ export default class XpraClient extends EventHandler {
       'cursors': true,
       'bell': true,
       'system_tray': true,
-      //we cannot handle this (GTK only):
       'named_cursors': false,
-      // printing
       'file-transfer': false,
       'printing': false,
       'file-size-limit': 10
@@ -457,6 +495,10 @@ export default class XpraClient extends EventHandler {
    * @return {Boolean}
    */
   processKey(wid, pressed, ev, keycode) {
+    if ( typeof keycode === 'undefined' ) {
+      return true;
+    }
+
     const result = getKeyPress(pressed, ev, keycode, this.caps_lock, this.num_lock, this.swap_keys);
     if ( result ) {
       const {keyval, keyname, str, group, modifiers, caps_lock, num_lock} = result;
@@ -542,6 +584,32 @@ export default class XpraClient extends EventHandler {
     this.send(['button-action', wid, button, pressed, [x, y], modifiers, buttons]);
   }
 
+  accept(hello) {
+    console.group('XpraClient', 'accept()');
+    console.log(hello);
+
+    const modifiers = hello.modifier_keycodes;
+    Object.keys(modifiers).forEach((n) => {
+      const mapping = modifiers[n];
+      Object.keys(mapping).forEach((m) => {
+        const keys = mapping[m];
+        Object.keys(keys).forEach((k) => {
+          if ( k === 'Num_Lock' ) {
+            this.num_lock_mod = n;
+          } else if ( k === 'Alt_L' ) {
+            this.alt_modifier = n;
+          } else if ( k === 'Meta_L' ) {
+            this.meta_modifier = n;
+          }
+        });
+      });
+    });
+
+    this.audio.setup(hello);
+
+    console.groupEnd();
+  }
+
   /**
    * Handles mouse cursor
    * @param {String} encoding Encoding
@@ -564,6 +632,22 @@ export default class XpraClient extends EventHandler {
       this.emit('cursor', [encoding, w, h, xhot, yhot, img_data]);
     } else {
       this.emit('reset-cursor');
+    }
+  }
+
+  /**
+   * Handles sound data
+   * @param {String} codec Encoding
+   * @param {Buffer} buf Buffer
+   * @param {Object} options Options
+   * @param {Object} metadata Metadata
+   */
+  sound(codec, buf, options, metadata) {
+    try {
+      this.audio.handle(codec, buf, options, metadata);
+    } catch ( e ) {
+      console.warn(e);
+      this.audio.destroy();
     }
   }
 
@@ -607,6 +691,8 @@ export default class XpraClient extends EventHandler {
       this.protocol = this.protocol.close();
       this.emit('disconnect');
     }
+
+    this.audio.destroy();
   }
 
   /**

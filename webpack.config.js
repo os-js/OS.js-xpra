@@ -8,6 +8,11 @@ module.exports = new Promise((resolve, reject) => {
   };
 
   osjs.webpack.createPackageConfiguration(metadataFile, options).then((result) => {
+    result.config.module.loaders.push({
+      test: /\.coffee$/,
+      use: ['coffee-loader']
+    });
+
     resolve(result.config);
   }).catch(reject);
 });

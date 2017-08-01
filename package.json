@@ -1,7 +1,9 @@
 {
   "name": "osjs-xpra",
   "dependencies": {
+    "av": "^0.4.9",
     "buffer": "^5.0.6",
+    "coffee-loader": "^0.7.3",
     "lz4": "^0.5.3",
     "node-forge": "^0.7.1",
     "webpack": "^3.4.1",

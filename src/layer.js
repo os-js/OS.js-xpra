@@ -4,6 +4,8 @@ import {MediaSourceUtil, MediaSourceConstants} from '../lib/MediaSourceUtil.js';
 import Zlib from 'zlibjs';
 import LZ4 from 'lz4';
 
+// TODO: Separate into VideoDecoder class
+
 const DEFAULT_BOX_COLORS = {
   'png': 'yellow',
   'h264': 'blue',

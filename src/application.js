@@ -131,7 +131,7 @@ export default class ApplicationXpra extends Application {
     const findOverlay = (wid) => this.map[wid];
 
     const createWindow = (wid, x, y, w, h, meta, props) => {
-      console.info('Creating window', [wid, x, y, w, h, meta, props]);
+      console.info('XpraApplication', 'Creating window', [wid, x, y, w, h, meta, props]);
       const win = new ApplicationXpraWindow({
         wid: wid,
         w: w,
