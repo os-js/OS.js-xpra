@@ -20,7 +20,7 @@ At the moment you'll have to manually start a process, for example Firefox:
 xpra --no-daemon --bind-tcp=127.0.0.1:10000 --start=firefox --html=on start :2
 ```
 
-If you want audio, add the `--speaker=on` argument. Only standard mediasource via opus+mka has been tested, so this might not work properly. You have been warned :)
+Sound support has been added, but might not work for all codecs. Please report to me if you have any issues or strange errors.
 
 ## Working
 
