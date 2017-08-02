@@ -4,11 +4,11 @@ import Layer from './layer.js';
 
 const Application = OSjs.require('core/application');
 const Window = OSjs.require('core/window');
-const WindowManager = OSjs.require('core/windowmanager');
+const WindowManager = OSjs.require('core/window-manager');
 const Dialog = OSjs.require('core/dialog');
 const Menu = OSjs.require('gui/menu');
 const Locales = OSjs.require('core/locales');
-const Notification = OSjs.require('core/notification');
+const Notification = OSjs.require('gui/notification');
 
 ///////////////////////////////////////////////////////////////////////////////
 // APPLICATION
