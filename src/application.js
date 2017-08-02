@@ -8,6 +8,7 @@ const WindowManager = OSjs.require('core/windowmanager');
 const Dialog = OSjs.require('core/dialog');
 const Menu = OSjs.require('gui/menu');
 const Locales = OSjs.require('core/locales');
+const Notification = OSjs.require('core/notification');
 
 ///////////////////////////////////////////////////////////////////////////////
 // APPLICATION
@@ -30,7 +31,7 @@ export default class ApplicationXpra extends Application {
       this.client = this.client.destroy();
     }
 
-    WindowManager.instance.removeNotificationIcon('Xpra');
+    Notification.removeIcon('Xpra');
 
     return super.destroy(...arguments);
   }
@@ -82,7 +83,7 @@ export default class ApplicationXpra extends Application {
       }], ev);
     };
 
-    WindowManager.instance.createNotificationIcon('Xpra', {
+    Notification.createIcon('Xpra', {
       icon: this._getResource('icon_color.png'),
       onClick: createMenu,
       onContextMenu: createMenu
@@ -190,7 +191,7 @@ export default class ApplicationXpra extends Application {
     this.client = new XpraClient();
 
     this.client.on('disconnect', () => {
-      WindowManager.instance.notification({
+      Notification.create({
         icon: this._getResource('icon_color.png'),
         title: 'Disconnected from Xpra',
         message: this._getArgument('uri')
@@ -199,7 +200,7 @@ export default class ApplicationXpra extends Application {
     });
 
     this.client.on('connect', () => {
-      WindowManager.instance.notification({
+      Notification.create({
         icon: this._getResource('icon_color.png'),
         title: 'Connected to Xpra',
         message: this._getArgument('uri')
