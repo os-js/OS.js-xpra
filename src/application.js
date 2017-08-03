@@ -31,7 +31,7 @@ export default class ApplicationXpra extends Application {
       this.client = this.client.destroy();
     }
 
-    Notification.removeIcon('Xpra');
+    Notification.destroyIcon('Xpra');
 
     return super.destroy(...arguments);
   }
