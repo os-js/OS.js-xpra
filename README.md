@@ -6,6 +6,12 @@ This is a modified version of the Xpra HTML5 client that lets you run your Linux
 
 [![YouTube Video](https://img.youtube.com/vi/c0safRR0ldM/0.jpg)](https://www.youtube.com/watch?v=c0safRR0ldM)
 
+## Installation
+
+```
+./bin/add-package.sh xpra Xpra https://github.com/os-js/osjs-xpra.git
+```
+
 ## Usage
 
 You'll need:
