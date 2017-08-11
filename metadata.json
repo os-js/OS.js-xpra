@@ -3,7 +3,7 @@
   "name": "Xpra Client",
   "mime": null,
   "icon": "./icon.png",
-  "category": "network",
+  "category": "graphics",
   "main": {
     "node": "server/main.js",
     "php": "server/main.php"
