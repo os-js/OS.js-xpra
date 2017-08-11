@@ -51,7 +51,6 @@ function getKeyModifiers(ev, caps_lock, num_lock, num_lock_mod, swap_keys) {
 }
 
 function getKeyPress(pressed, ev, keycode, caps_lock, num_lock, swap_keys) {
-
   var keyname = ev.code || '';
   if ( keycode === 229 ) {
     //this usually fires when we have received the event via "oninput" already
