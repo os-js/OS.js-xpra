@@ -56,7 +56,7 @@ function getKeyPress(pressed, ev, keycode, caps_lock, num_lock, swap_keys) {
     //this usually fires when we have received the event via "oninput" already
     return false;
   }
-  var str = event.key || String.fromCharCode(keycode);
+  var str = ev.key || String.fromCharCode(keycode);
 
   //sync numlock FIXME
   if ( keycode === 144 && pressed ) {
@@ -81,11 +81,11 @@ function getKeyPress(pressed, ev, keycode, caps_lock, num_lock, swap_keys) {
   }
 
   var DOM_KEY_LOCATION_RIGHT = 2;
-  if ( keyname.match('_L$') && event.location === DOM_KEY_LOCATION_RIGHT ) {
+  if ( keyname.match('_L$') && ev.location === DOM_KEY_LOCATION_RIGHT ) {
     keyname = keyname.replace('_L', '_R');
   }
 
-  var raw_modifiers = get_event_modifiers(event);
+  var raw_modifiers = get_event_modifiers(ev);
   var modifiers = translateModifiers(raw_modifiers, swap_keys);
   var keyval = keycode;
   var group = 0;
