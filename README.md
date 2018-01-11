@@ -16,7 +16,7 @@ This is a modified version of the Xpra HTML5 client that lets you run your Linux
 
 You'll need:
 
-* Xpra installed
+* Xpra installed (2.x or later)
 * Websockify (**with the python module**)
 * python-dbus, python-gobject
 
