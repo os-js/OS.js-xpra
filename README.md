@@ -9,7 +9,7 @@ This is a modified version of the Xpra HTML5 client that lets you run your Linux
 ## Installation
 
 ```
-./bin/add-package.sh xpra Xpra https://github.com/os-js/osjs-xpra.git
+./bin/add-package.sh xpra Xpra https://github.com/os-js/OS.js-xpra.git
 ```
 
 ## Usage
